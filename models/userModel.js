@@ -41,9 +41,12 @@ const UserSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        church_id: {
+          type: String,
+          required: true,
+        },
         church_logo: {
           type: String,
-          default: 'image url',
         },
         super: {
           type: String,

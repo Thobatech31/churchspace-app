@@ -1,32 +1,11 @@
 const router = require('express').Router();
 const { split, join } = require('lodash');
+const axios = require('axios');
 const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
 
-//Create  Minister
-router.post("/", async (req, res) => {
-  const nos_list = "09088223454,08094345465";
-  const nos = split(nos_list);
-  const n_list = [...new Set(nos)]
 
-  const d_list = n_list.join(",");
-  console.log(d_list)
- 
-  try {   
 
-    return res.status(200).json({
-      status: {
-        code: 100,
-        msg: "Message Sent Successfully"
-      },
-      data:d_list
-    })
-  } catch (err) {
-    return res.status(500).json({ msg: err })
-  }
-
-})
-
-//Create  Minister
+//Send Sms
 router.post("/custom", async (req, res) => {
   const { sender_id, mobile, message
   } = req.body;
@@ -41,52 +20,81 @@ router.post("/custom", async (req, res) => {
 
   const d_list = n_list.join(",");
 
-  try {
-    const url = `${process.env.DOJAH_BASE_URL}/messaging/sms/`;
-    const postVars = {
-      'destination' : d_list,
-      'message' : message,
-      'channel' : 'sms',
-      'sender_id' : sender_id
-    };
-    const options = {
-      'method' : 'POST',
-      'content' : json_encode(postVars),
-      headers : {
-        'Content-Type': 'application/json',
-        'Authorization': process.env.DOJAH_SECRET_KEY,
-        'AppId': process.env.DOJAH_APP_ID,
-      }
-     
-    }; 
-    request(url , options, function (error, response, body) {
-      if (!error) {
-        const data = JSON.parse(body).data;
-        console.log(data)
-        if (data.status) {
-          return res.status(200).json({
-            status: {
-              code: 100,
-              msg: "Message Sent Successfully"
-            },
-            data:url
-          })
-        }
-        else if (data.status == "success") {
-          //update Transaction Model For the user details
-         
-        }
-        else {
-          res.status(401).json({msg: "Transaction error"});
-        }
-      } else {
-        return res.status(401).json({msg: "err"});
-      }
-    });
-  } catch (err) {
-    return res.status(500).json({ msg: err })
-  }
 
+  const url = `${process.env.DOJAH_BASE_URL}/messaging/sms/`;
+  const postVars = {
+    'destination': d_list,
+    'message': message,
+    'channel': 'sms',
+    'sender_id': sender_id
+  };
+
+  const options = {
+    'method': 'POST',
+    data: JSON.stringify(postVars),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': process.env.DOJAH_SECRET_KEY,
+      'AppId': process.env.DOJAH_APP_ID,
+    }
+  };
+
+
+  try {
+    let resp = await axios(url, options);
+    let data = resp.data;
+    console.log(data);
+    // console.log(resp);
+    return res.status(200).json({
+      status: {
+        code: 100,
+        msg: 'Message Sent  Successfully'
+      },    
+      data: data,
+    })
+  } catch (error) {
+    
+    console.log(error); // this is the main part. Use the response property from the error object
+
+    return res.status(500).json({ msg: error });
+  }
 })
 
+
+
+//Send Sms
+router.get("/walletbalance", async (req, res) => {
+
+  const url = `${process.env.DOJAH_BASE_URL}/balance/`;
+  const options = {
+    'method': 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': process.env.DOJAH_SECRET_KEY,
+      'AppId': process.env.DOJAH_APP_ID,
+    }
+  };
+
+  try {
+    let resp = await axios(url, options);
+    let data = resp.data;
+    console.log(data);
+    // console.log(resp);
+    return res.status(200).json({
+      status: {
+        code: 100,
+        msg: 'Wallet Balance Fetched Successfully'
+      },
+      wallet_balance: data,
+
+    })
+  } catch (error) {
+    console.log(error); // this is the main part. Use the response property from the error object
+
+    return res.status(500).json({ msg: error });
+  }
+})
+
+
 module.exports = router
+

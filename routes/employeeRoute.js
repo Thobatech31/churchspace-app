@@ -7,6 +7,7 @@ var Employee = require('../models/employeeModel');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   var employeesJsonArray = excelReader.readExcel('./public/employees.xlsx')
+
   Employee.insertMany(employeesJsonArray, function (error, docs) {
     if (error) {
       next(error)

@@ -2,15 +2,51 @@ const router = require('express').Router();
 const User = require('../models/userModel');
 const Admin = require('../models/superUserModel');
 const CryptoJS = require("crypto-js");
+const { nanoid } = require('nanoid');
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
 const mailgun = require("mailgun-js");
+const nodemailer = require("nodemailer");
 const { result } = require('lodash');
-const DOMAIN = 'sandbox1007fd244adb439091af67d5b46543d1.mailgun.org';
-const mg = mailgun({apiKey: 'efe5ce01dcc618d9e3b297f06f81cc8a-c250c684-64e5fd3a', domain: DOMAIN });
+const DOMAIN = process.env.MAILGUN_DOMAIN;
+const mg = mailgun({ apiKey: "efe5ce01dcc618d9e3b297f06f81cc8a-c250c684-64e5fd3a" , domain: DOMAIN });
 const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
 
+const aws = require('aws-sdk')                // aws-sdk library will used to upload image to s3 bucket.
+const multer = require('multer')              // multer will be used to handle the form data.
+const multerS3 = require('multer-s3');              // multer will be used to handle the form data.
+
+const s3 = new aws.S3({
+    accessKeyId: "AKIAWWYDB2UDPFODPPUG",
+    secretAccessKey: "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",
+    region: "us-east-2",
+})
+
+const upload = (bucketName) =>
+    multer({
+        storage: multerS3({
+            s3,
+            bucket: bucketName,
+            metadata: function (req, file, cb) {
+                cb(null, { fieldName: file.fieldname })
+            },
+            key: function (req, file, cb) {
+                cb(null, `image-${Date.now()}.png`);
+            },
+        }),
+    });
+
+// create reusable transporter object using the default SMTP transport
+let transporter = nodemailer.createTransport({
+    host: process.env.NODEMAILER_HOST,
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: process.env.NODEMAILER_EMAIL_ADDR,
+        pass: process.env.NODEMAILER_PASSWORD
+    },
+});
 
 //CREAT ADMIN USER WITHOUT EMAIL VERIFICATION
 router.post("/create-admin", async (req, res) => {
@@ -107,7 +143,7 @@ router.post("/admin-login", async (req, res) => {
 //REGISTER WITHOUT EMAIL VERIFICATION
 router.post("/register", verifyTokenAndAdmin, async (req, res) => {
     const { username, email, mobile, first_name, last_name, church_name,
-        church_denomination, church_address, church_website } = req.body;
+        church_denomination, church_address, church_website, church_id } = req.body;
 
     //Check If Username Field Empty
     if (!username) return res.status(401).json({ msg: "Username Field is Empty" })
@@ -136,6 +172,13 @@ router.post("/register", verifyTokenAndAdmin, async (req, res) => {
     //Check If church_denomination Field Empty
     if (!church_denomination) return res.status(401).json({ msg: "Church denomination Field is Empty" })
 
+
+    const church_code = nanoid(10);
+
+
+    //Check If church_id Field Empty
+    if (!church_code) return res.status(401).json({ msg: "Church Id Field is Empty" })
+
     //Check If Password Field Empty
     if (!req.body.password) return res.status(401).json({ msg: "Password Field is Empty" })
 
@@ -155,7 +198,7 @@ router.post("/register", verifyTokenAndAdmin, async (req, res) => {
     const hashPassword = await bcrypt.hash(req.body.password, salt);
 
     //get the logged in user details from the token
-    const userP = req.user;
+    const user = req.user;
 
     try {
         const savedUser = await User.create({
@@ -168,9 +211,27 @@ router.post("/register", verifyTokenAndAdmin, async (req, res) => {
             church_denomination, 
             church_address,
              church_website,
+            church_id:church_code.toUpperCase(),
             super:user.id,
             password: hashPassword
         });
+
+        const mailOptions = {
+            from: 'sender@gmail.com', // Sender address
+            to: email, // List of recipients
+            subject: 'Node Mailer', // Subject line
+            html: '<h2 style="color:#ff6600;">Hello People!, Welcome to Bacancy!</h2> ',
+        };
+
+        transporter.sendMail(mailOptions, function (err, info) {
+            if (err) {
+                console.log(err)
+            } else {
+                console.log(info);
+            }
+        });
+
+        
         return res.status(200).json({
             status: {
                 code: 100,
@@ -187,6 +248,13 @@ router.post("/register", verifyTokenAndAdmin, async (req, res) => {
 //LOGIN USER
 router.post("/login", async (req, res) => {
     const { username } = req.body;
+
+    //Check If Username Field Empty
+    if (!username) return res.status(401).json({ msg: "Username Field is Empty" })
+
+    //Check If Email address Field Empty
+    if (!req.body.password) return res.status(401).json({ msg: "password Field is Empty" })
+
     try {
         //check if the user with the username exist
         const user = await User.findOne({ username: username })
@@ -223,7 +291,7 @@ router.put("/forgot-password", async (req, res) => {
     //Check if email already exists in the DB
     const user = await User.checkEmailAlreadyExist(email)
     if (!user)
-        return res.status(401).json({ msg: "User with this Email Already does not exists Exists" });
+        return res.status(401).json({ msg: "User with this Email does not Exists" });
     try {
         const token = jwt.sign({ id: user._id }, process.env.RESET_PASSWORD_KEY, { expiresIn: '20m' });
         const data = {
@@ -294,48 +362,193 @@ router.put("/reset-password", async (req, res) => {
         })
     } else {
         return res.status(500).json({ msg: "Authentication Error !!!" })
-
     }
 })
 
 //CHANGE PASSWORD
-router.post("/change-password", verifyToken, async (req, res) => {
-    const { oldPassword, newPassword, confirmNewPassword } = req.body
-    const useremail = req.user.email;
-    const user = await User.findOne({ useremail })
+router.put("/change-password", verifyToken, async (req, res) => {
+    const { oldPassword, newPassword, confirmPassword } = req.body
+    const username = req.user.username;
+    const user = await User.findOne({ username:username })
 
-    const originalPassword = CryptoJS.AES.decrypt(user.password, process.env.ENCRYPT_PASSWORD_KEY).toString(CryptoJS.enc.Utf8); //Using CRYPTOJS on password Encryption 
 
-    if (originalPassword == oldPassword) {
-        if (newPassword == confirmNewPassword) {
+    //Check If Old Password Field Empty
+    if (!oldPassword) return res.status(401).json({ msg: "Old Password Field is Empty" })
 
-            const newHashPassword = CryptoJS.AES.encrypt(newPassword, process.env.ENCRYPT_PASSWORD_KEY)
+    //Check If New Password address Field Empty
+    if (!newPassword) return res.status(401).json({ msg: "New Password Field is Empty" })
 
-            return user.updateOne({ password: 'U2FsdGVkX19fKpq+tqJop1MQWTnK/UGTb4Gp2q2I2Es='  }, function (err, success) {
-                if (err) {
-                    return res.status(400).json({ msg: "Error occure" });
-                } else {
+    //Check If confirmPassword Password address Field Empty
+    if (!confirmPassword) return res.status(401).json({ msg: "Confirm Password Field is Empty" })
 
-                    return res.status(200).json({
-                        status: {
-                            code: 100,
-                            msg: "Password Updated Succesfully"
-                        },
-                        // data: user.password
-                    })
-                }
+    // const originalPassword = await bcrypt.compare(oldHashPassword, user.password);
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(newPassword, salt);
+    try{
+        if (newPassword == confirmPassword) {
+            console.log(username)
+            const UpdatePass = await User.findByIdAndUpdate(user._id, {
+                password: hashPassword
+            }, { new: true });
+            const { password, ...others } = UpdatePass._doc
+
+            return res.status(200).json({
+                status: {
+                    code: 100,
+                    msg: "Password Updated Succesfully"
+                },
+                data: { ...others}
             })
+        }else{
+            return res.status(500).json({ msg: "new Password and Confirm Password does not Match" });
 
-
-        } else {
-            res.status(401).json({ msg: "New Password does not matches Confirm Password" })
         }
 
-    } else {
-        res.status(401).json({ msg: "Old Password does not matches with your password" })
+    }catch (err){
+        return res.status(500).json({ msg: err });
+
     }
+})
+
+//UPDATE User (ONLY Admin CAN UPDATE Member)
+router.put("/users/:id", verifyTokenAndAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    const availId = await User.findOne({ _id: id })
+    if (!availId) return res.status(401).json({ msg: "User with Id does not Exists" });
+
+    try {
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, {
+            $set: req.body
+        }, { new: true });
+
+        return res.status(200).json({
+            status: {
+                code: 100,
+                msg: 'User Updated successfully'
+            },
+            data: updatedUser,
+        })
+    } catch (err) {
+        return res.status(500).json({ msg: err });
+    }
+})
+
+//UPDATE Church  Logo(ONLY Admin CAN UPDATE Logo)
+router.post("/uploadchurchlogo/:id", verifyTokenAndAdmin, async (req, res) => {
+
+    const { id } = req.params;
+
+
+    const uploadSingle = upload("churchspace").single("church-logo");
+
+    uploadSingle(req, res, async (err) => {
+        if (err)
+            return res.status(401).json({
+                success: false,
+                message: err.message
+            });
+
+        console.log(req.file);
+
+
+        const availId = await User.findOne({ _id: id })
+        if (!availId) return res.status(401).json({ msg: "User(Church) with Id does not Exists" });
+
+        const updatedChurchLogo = await User.findByIdAndUpdate(id, {
+            church_logo: req.file.location,
+        }, { new: true });
+
+
+        return res.status(200).json({
+            status: {
+                code: 100,
+                msg: 'Logo upload successfully'
+            },
+            data: updatedChurchLogo,
+        });
+    });
 
 })
 
+//Get User
+router.get("/user/:id", verifyTokenAndAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    const availId = await User.findOne({ _id: id })
+    if (!availId) return res.status(401).json({ msg: "User with Id does not Exists" });
+    try {
+        const UserData = await User.findById(req.params.id)
+        return res.status(200).json({
+            status: {
+                code: 100,
+                msg: "User Fetched Successfully",
+            },
+            data: UserData
+        })
+
+    } catch (err) {
+        return res.status(500).json({ msg: err })
+    }
+})
+
+//Delete User (ONLY Admin CAN DELETE User)
+router.delete("/user/:id", verifyTokenAndAdmin, async (req, res) => {
+    const { id } = req.params;
+    const availId = await User.findOne({ _id: id })
+    if (!availId) return res.status(401).json({ msg: "User with Id does not Exists" });
+
+    try {
+        await User.findByIdAndDelete(req.params.id)
+        return res.status(200).json({
+            status: {
+                code: 100,
+                msg: "User deleted Successfully"
+            }
+        })
+    } catch (err) {
+        return res.status(500).json({ msg: err })
+    }
+})
+
+//Get all Users based on SUPERADMIN ID (ONLY admin user CAN GET ALL users)
+router.get("/getusers", verifyTokenAndAdmin, async (req, res) => {
+    //Initiating a seach parameter with (User)
+    const {super_id} = req.body;
+    let query = {};
+    if (req.query.search) {
+        query.$or = [
+            { "first_name": { $regex: req.query.search, $options: 'i' } }, { "last_name": { $regex: req.query.search, $options: 'i' } }, { "email": { $regex: req.query.search, $options: 'i' } },
+        ];
+    }
+
+    const pageSize = req.query.pageSize || 10;
+    const currentPage = req.query.currentPage || 1;
+    try {
+        const users = await User.find(req.query.search ? query : { super: super_id }) 
+            .sort({ createdAt: -1 })
+            .skip(pageSize * (currentPage - 1))
+            .limit(pageSize);
+
+        // count the total number of records for that model
+        const totalUsers = await User.countDocuments();
+
+        if (!users) return res.status(404).json({ msg: "There's No User Available" })
+
+        return res.status(200).json({
+            status: {
+                code: 100,
+                msg: 'All Users fetched successfully'
+            },
+            data: users,
+            totalPage: parseInt(pageSize),
+            totalRecords: parseInt(totalUsers),
+            page: parseInt(currentPage),
+        })
+    } catch (err) {
+        return res.status(500).json({ msg: err });
+    }
+
+})
 
 module.exports = router

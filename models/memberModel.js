@@ -96,6 +96,24 @@ memberSchema.statics.checkMobileAlreadyExist = async (mobile) => {
 }
 
 
+memberSchema.statics.trim_no = (number) => {
+  //$number = " 08034470925   , 07034562134  , 07034562345, 	2348034470925 ";
+  const numbers = number.replace('/\s+/', '', number);
+  var array = numbers.split(",");
+  var lengthofarray = count(array);
+  for (i = 0; i < lengthofarray; $i++) {
+    var exp = "/^0/";
+    var txtreplace = "234";
+    var str = array[i];
+    array[i] = str.replace(exp, txtreplace, str);
+    const finalouput = array.implode(",");
+  }
+
+  return finalouput;
+}
+
+
+
 // module.exports = mongoose.model("User", UserSchema);
 const Member = mongoose.model("Member", memberSchema)
 

@@ -1,6 +1,10 @@
 const router = require('express').Router();
 const Member = require("../models/memberModel");
+const path = require('path');
+const __basedir = path.resolve();
 var excelReader = require('../helper/excel-reader');
+const upload = require("../middleware/upload");
+const readXlsxFile = require("read-excel-file/node");
 const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
 
 //Create  Member
@@ -42,10 +46,29 @@ router.post("/", verifyToken, async (req, res) => {
 
 })
 
-router.get('/bulkupload', verifyToken, function (req, res, next) {
+
+router.get('/readbulkuploadfile', verifyToken, function (req, res, next) {
+  const { email, mobile, alternative_mobile, first_name, last_name, date_joined,
+    home_address, office_address, occupation, gender, dob, photo, mdepartment, mchurch_group
+  } = req.body;
+  // const NumTrim = Member.trim_no(mobile)
+  // if (NumTrim) 
+  // console.log(NumTrim);
+  // return res.status(401).json({ msg: NumTrim});
+
   const user = req.user;
-  var employeesJsonArray = excelReader.readExcel('./public/member.xlsx')
-  Member.insertMany(employeesJsonArray,{userId:1}, function (error, docs) {
+  var membersJsonArray = excelReader.readExcel('./public/member.xlsx');
+
+  
+
+  var memberWithDesignation = membersJsonArray.map(member => ({
+    ...member,
+    userId: user.id,
+    mchurch_group: mchurch_group,
+    mdepartment: mdepartment
+  }));
+try{
+  Member.insertMany(memberWithDesignation, function (error, docs) {
     if (error) {
       next(error)
     }
@@ -59,7 +82,69 @@ router.get('/bulkupload', verifyToken, function (req, res, next) {
       })
     }
   });
+}catch (err){
+  return res.status(500).json({ msg: err });
+}
 });
+
+
+router.post("/bulkupload", verifyToken, upload.single("file"), async (req, res) => {
+  const { mdepartment, mchurch_group
+  } = req.body;
+  const user = req.user;
+
+  try {
+    if (req.file == undefined) {
+      return res.status(400).send("Please upload an excel file!");
+    }
+    let path =
+      __basedir + "/uploads/" + req.file.filename;
+    readXlsxFile(path).then((rows) => {
+      // skip header
+      rows.shift();
+      let membersData = [];
+      rows.forEach((row) => {
+        let members = {
+          first_name: row[0],
+          last_name: row[1],
+          email: row[2],
+          mobile: row[3],
+          alternative_mobile: row[4],
+          home_address: row[5],
+          office_address: row[6],
+        };
+        membersData.push({
+          ...members,
+          userId: user.id,
+          mchurch_group: mchurch_group,
+          mdepartment: mdepartment
+        });
+      });
+      Member.create(membersData)
+        .then(() => {
+          return res.status(200).json({
+            status: {
+              code: 100,
+              msg: "Bulk Members Uploaded successfully: " + req.file.originalname,
+            },
+            data: membersData,
+          });
+        })
+        .catch((error) => {
+          return res.status(500).json({
+            message: "Fail to import data into database!",
+            error: error.message,
+          });
+        });
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Could not upload the file: " + req.file.originalname,
+    });
+  }
+});
+
 
 //UPDATE Member (ONLY User CAN UPDATE Member)
 router.put("/:id", verifyToken, async (req, res) => {

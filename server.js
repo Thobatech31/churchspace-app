@@ -20,6 +20,9 @@ const financialRoute = require('./routes/finacialRoute');
 const feedbackRoute = require('./routes/feedbackRoute');
 const employeeRoute = require('./routes/employeeRoute');
 const sendSmsRoute = require('./routes/sendSmsRoute');
+const welfareRoute = require('./routes/welfareRoute');
+const bulkuploadRoute = require('./routes/bulkuploadRoute');
+
 
 dotenv.config();
 
@@ -27,7 +30,6 @@ dotenv.config();
 //Middlewares
 app.use(cors());
 app.use(express.json());
-
 
 //Connect to Database
 mongoose.connect(process.env.MONGO_URL, {
@@ -54,6 +56,8 @@ app.use('/api/financial', financialRoute);
 app.use('/api/feedback', feedbackRoute);
 app.use('/api/employee', employeeRoute);
 app.use('/api/sendsms', sendSmsRoute);
+app.use('/api/welfare', welfareRoute);
+app.use('/api/bulk', bulkuploadRoute);
 
 
 
