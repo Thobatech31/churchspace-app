@@ -93,7 +93,7 @@ router.post("/uploadrequestdoc/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
 
  
-const uploadSingle = upload("churchspace").single("request-image");
+  const uploadSingle = upload(process.env.BUCKETNAME).single("request-image");
 
   uploadSingle(req, res, async(err) =>{
   if(err)

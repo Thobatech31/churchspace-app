@@ -440,7 +440,7 @@ router.post("/uploadchurchlogo/:id", verifyTokenAndAdmin, async (req, res) => {
     const { id } = req.params;
 
 
-    const uploadSingle = upload("churchspace").single("church-logo");
+    const uploadSingle = upload(process.env.BUCKETNAME).single("church-logo");
 
     uploadSingle(req, res, async (err) => {
         if (err)
