@@ -3,15 +3,21 @@ const Welfare = require("../models/welfareModel");
 const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
 const Member = require("../models/memberModel");
 
+const dotenv = require("dotenv");
+
+dotenv.config();
+
 
 const aws = require('aws-sdk')                // aws-sdk library will used to upload image to s3 bucket.
 const multer = require('multer')              // multer will be used to handle the form data.
 const multerS3 = require('multer-s3');              // multer will be used to handle the form data.
 
 const s3 = new aws.S3({
-  accessKeyId:"AKIAWWYDB2UDPFODPPUG",
-  secretAccessKey:"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",
-  region: "us-east-2",
+  accessKeyId: process.env.S3_ACCESS_KEY,
+  secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+  region: "eu-west-2",
+  maxRetries: 3,
+  httpOptions: { timeout: 30000, connectTimeout: 5000 },
 })
 
 const upload = (bucketName) =>
