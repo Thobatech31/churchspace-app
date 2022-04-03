@@ -5,18 +5,16 @@ const Member = require("../models/memberModel");
 const FirstTimer = require("../models/firstTimerModel");
 const Department = require("../models/departmentModel");
 const Churchgroup = require("../models/churchGroupModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
-
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 
 //Send Custom Sms
-router.post("/custom", verifyToken, async (req, res) => {
+router.post("/custom", verifyTokenUser, async (req, res) => {
   const { sender_id, mobile, message
   } = req.body;
   if (!sender_id) return res.status(401).json({ msg: "Sender ID Field is Empty" });
   if (!mobile) return res.status(401).json({ msg: "Mobile Field is Empty" })
   if (!message) return res.status(401).json({ msg: "Message Field is Empty" })
-
 
   // const nos_list = str_replace(array("\n", ":", ";"), ",", mobile);
   const nos_list = mobile;
@@ -67,7 +65,7 @@ router.post("/custom", verifyToken, async (req, res) => {
 })
 
 //Send to All Members
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { sender_id, mobile, message, select_all_members, select_all_firsttimers, departments, church_grp
   } = req.body;
   if (!sender_id) return res.status(401).json({ msg: "Sender ID Field is Empty" });
@@ -153,8 +151,6 @@ router.post("/", verifyToken, async (req, res) => {
     }
   }
 
-
-
   const nos = split(nos_list.slice(0, -1));
   console.log("NUMBEEEERR", nos);
   // console.log("NUMBEEEERR QWE4 JFJR", nos_list.slice(0,-1));
@@ -195,12 +191,11 @@ router.post("/", verifyToken, async (req, res) => {
     // console.log(error.response.data['error']); // this is the main part. Use the response property from the error object
     return res.status(500).json({ msg: error.response.data['error'] });
   }
-
 })
 
-//Send Sms
-router.get("/walletbalance", verifyToken, async (req, res) => {
 
+//Send Sms
+router.get("/walletbalance", verifyTokenUser, async (req, res) => {
   const url = `${process.env.DOJAH_BASE_URL}/balance/`;
   const options = {
     'method': 'GET',
@@ -210,7 +205,6 @@ router.get("/walletbalance", verifyToken, async (req, res) => {
       'AppId': process.env.DOJAH_APP_ID,
     }
   };
-
   try {
     let resp = await axios(url, options);
     let data = resp.data;
@@ -228,7 +222,7 @@ router.get("/walletbalance", verifyToken, async (req, res) => {
     return res.status(500).json({ msg: error.response.data['error'] });
   }
 })
-
-
 module.exports = router
+
+
 

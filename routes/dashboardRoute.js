@@ -10,16 +10,12 @@ const Member = require("../models/memberModel");
 const Minister = require("../models/ministerModel");
 const PrayerRequest = require("../models/prayerRequestModel");
 
-
-
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
-
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Get Dasboard Stats
-router.get("/stats", verifyToken, async (req, res, next) => {
+router.get("/stats", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (Financials)
   const user = req.user;
-
   try {
     const Financials = await Financial.find({ userId: user.id }) //we use FIND because user can have more than one order
     // count the total number of return recods

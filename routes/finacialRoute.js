@@ -1,10 +1,10 @@
 const router = require('express').Router();
 const { each } = require('lodash');
 const Financial = require("../models/financialModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  New Offering
-router.post("/offering", verifyToken, async (req, res) => {
+router.post("/offering", verifyTokenUser, async (req, res) => {
     const { kind, purpose,amount,type,offering_date
     } = req.body;
     if (!amount) return res.status(401).json({ msg: "Amount Field is Empty" })
@@ -34,7 +34,7 @@ router.post("/offering", verifyToken, async (req, res) => {
 })
 
 //Create  New Tithe
-router.post("/tithe", verifyToken, async (req, res) => {
+router.post("/tithe", verifyTokenUser, async (req, res) => {
     const { kind, purpose,amount,type,offering_date,tithe_giver_type
     } = req.body;
     if (!amount) return res.status(401).json({ msg: "Amount Field is Empty" })
@@ -66,7 +66,7 @@ router.post("/tithe", verifyToken, async (req, res) => {
 
 
 //Create  New Expense
-router.post("/expenses", verifyToken, async (req, res) => {
+router.post("/expenses", verifyTokenUser, async (req, res) => {
     const { kind, purpose,amount,type,offering_date,remark,expenseCatoryId
     } = req.body;
     if (!amount) return res.status(401).json({ msg: "Amount Field is Empty" })
@@ -100,7 +100,7 @@ router.post("/expenses", verifyToken, async (req, res) => {
 })
 
 //UPDATE Financial (ONLY User CAN UPDATE Financial)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
 
     const availId = await Financial.findOne({ _id: id })
@@ -124,7 +124,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete Financial (ONLY User CAN DELETE Financial)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
     const availId = await Financial.findOne({ _id: id })
     if (!availId) return res.status(401).json({ msg: "Financial with Id does not Exists" });
@@ -143,7 +143,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get Financial
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
 
     const availId = await Financial.findOne({ _id: id })
@@ -204,7 +204,7 @@ router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
 })
 
 //Get BY USER iD Financial
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
     //Initiating a seach parameter with (Financial)
     let query = {};
     if (req.query.search) {
@@ -244,7 +244,7 @@ router.get("/findByUserId", verifyToken, async (req, res, next) => {
 })
 
 //Get Financial Stats
-router.get("/stats", verifyToken, async (req, res, next) => {
+router.get("/stats", verifyTokenUser, async (req, res, next) => {
     //Initiating a seach parameter with (Financials)
     const user = req.user;
 

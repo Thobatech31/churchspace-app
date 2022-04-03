@@ -4,10 +4,10 @@ const { sequelize } = require('../models/attendanceModel') //Directory to models
 const Sequelize = require('sequelize') // This the classed sequelize
 const { QueryTypes } = require('sequelize');
 
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  Attendance
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
     const { service_title, men_attd, women_attd, children_attd, date_attendance,total_attd
     } = req.body;
     if (!service_title) return res.status(401).json({ msg: "Service Title Field is Empty" });
@@ -41,7 +41,7 @@ router.post("/", verifyToken, async (req, res) => {
 })
 
 //UPDATE Attendance (ONLY User CAN UPDATE Attendance)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
 
     const availId = await Attendance.findOne({ _id: id })
@@ -65,7 +65,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete Attendance (ONLY User CAN DELETE Attendance)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
     const availId = await Attendance.findOne({ _id: id })
     if (!availId) return res.status(401).json({ msg: "Attendance with Id does not Exists" });
@@ -84,7 +84,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get Attendance
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
 
     const availId = await Attendance.findOne({ _id: id })
@@ -145,7 +145,7 @@ router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
 })
 
 //Get BY USER iD Attendance
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
     //Initiating a seach parameter with (Attendance)
     let query = {};
     if (req.query.search) {
@@ -185,7 +185,7 @@ router.get("/findByUserId", verifyToken, async (req, res, next) => {
 
 
 //Get attendance Stats
-router.get("/stats", verifyToken, async (req, res, next) => {
+router.get("/stats", verifyTokenUser, async (req, res, next) => {
     //Initiating a seach parameter with (Attendance)
     const user = req.user;
 
@@ -225,7 +225,7 @@ router.get("/stats", verifyToken, async (req, res, next) => {
     }
 })
 //Get attendance Stats
-router.get("/stats", verifyToken, async (req, res, next) => {
+router.get("/stats", verifyTokenUser, async (req, res, next) => {
     //Initiating a seach parameter with (Attendance)
     const user = req.user;
 

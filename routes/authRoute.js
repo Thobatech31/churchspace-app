@@ -5,15 +5,18 @@ const CryptoJS = require("crypto-js");
 const { nanoid } = require('nanoid');
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
+const request = require('request');
 const _ = require("lodash");
 const mailgun = require("mailgun-js");
 const nodemailer = require("nodemailer");
 const { result } = require('lodash');
 const dotenv = require("dotenv");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenUser, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const Transaction = require("../models/transactionModel");
+const { initializePayment, verifyPayment } = require('../config/paystack')(request);
+
 
 dotenv.config();
-
 const DOMAIN = process.env.MAILGUN_DOMAIN;
 const mg = mailgun({ apiKey: process.env.MAILGUN_APP_APIKEY, domain: DOMAIN });
 
@@ -95,7 +98,9 @@ router.post("/create-admin", async (req, res) => {
         const savedUser = await Admin.create({
             username,
             email,
-            mobile, first_name, last_name,
+            mobile,
+            first_name,
+            last_name,
             password: hashPassword
         });
         return res.status(200).json({
@@ -111,14 +116,20 @@ router.post("/create-admin", async (req, res) => {
 })
 
 
+
 //LOGIN ADMIN
 router.post("/admin-login", async (req, res) => {
     const { username } = req.body;
     try {
+        //Check if username field is empty
+        if (!username) return res.status(401).json({ msg: "Username Field is Empty" })
+
+        //Check if password field is empty
+        if (!req.body.password) return res.status(401).json({ msg: "Password Field is Empty" })
+
         //check if the Admin with the username exist
         const adminUser = await Admin.findOne({ username: username })
-        if (!adminUser)
-            return res.status(401).json({ msg: "Wrong Username or Password" })
+        if (!adminUser) return res.status(401).json({ msg: "Wrong Username or Password" })
 
         const validated = await bcrypt.compare(req.body.password, adminUser.password);
         !validated && res.status(400).json({ msg: "Password is Wrong" });
@@ -148,8 +159,7 @@ router.post("/admin-login", async (req, res) => {
 
 //REGISTER WITH EMAIL VERIFICATION
 router.post("/register", verifyTokenAndAdmin, async (req, res) => {
-    const { username, email, mobile, first_name, last_name, church_name,
-        church_denomination, church_address, church_website, church_id } = req.body;
+    const { username, email, mobile, first_name, last_name, church_name, church_denomination, church_address, church_website, church_id } = req.body;
 
     //Check If Username Field Empty
     if (!username) return res.status(401).json({ msg: "Username Field is Empty" })
@@ -178,9 +188,8 @@ router.post("/register", verifyTokenAndAdmin, async (req, res) => {
     //Check If church_denomination Field Empty
     if (!church_denomination) return res.status(401).json({ msg: "Church denomination Field is Empty" })
 
-
+    //Generate Random character for the church code
     const church_code = nanoid(10);
-
 
     //Check If church_id Field Empty
     if (!church_code) return res.status(401).json({ msg: "Church Id Field is Empty" })
@@ -305,7 +314,7 @@ router.put("/forgot-password", async (req, res) => {
             from: 'churchspace@elta.solutions',
             to: email,
             subject: 'Church Space Password Reset Link',
-          
+
 
             html: `
             <!DOCTYPE html>
@@ -875,11 +884,11 @@ router.put("/forgot-password", async (req, res) => {
                             code: 100,
                             msg: 'Email has been sent successfully, Kindly Follow the instruction'
                         },
-                        data:{
+                        data: {
                             email: user.email,
-                        username: user.username
+                            username: user.username
                         }
-                      
+
                     })
                 });
             }
@@ -926,7 +935,7 @@ router.put("/reset-password", async (req, res) => {
 })
 
 //CHANGE PASSWORD
-router.put("/change-password", verifyToken, async (req, res) => {
+router.put("/change-password", verifyTokenUser, async (req, res) => {
     const { oldPassword, newPassword, confirmPassword } = req.body
     const username = req.user.username;
     const user = await User.findOne({ username: username })
@@ -1016,36 +1025,10 @@ router.put("/change-password", verifyToken, async (req, res) => {
     // }
 })
 
-//UPDATE User (ONLY Admin CAN UPDATE Member)
-router.put("/users/:id", verifyTokenAndAdmin, async (req, res) => {
-    const { id } = req.params;
-
-    const availId = await User.findOne({ _id: id })
-    if (!availId) return res.status(401).json({ msg: "User with Id does not Exists" });
-
-    try {
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, {
-            $set: req.body
-        }, { new: true });
-
-        return res.status(200).json({
-            status: {
-                code: 100,
-                msg: 'User Updated successfully'
-            },
-            data: updatedUser,
-        })
-    } catch (err) {
-        return res.status(500).json({ msg: err });
-    }
-})
 
 //UPDATE Church  Logo(ONLY Admin CAN UPDATE Logo)
 router.post("/uploadchurchlogo/:id", verifyTokenAndAdmin, async (req, res) => {
-
     const { id } = req.params;
-
-
     const uploadSingle = upload(process.env.BUCKETNAME).single("church-logo");
 
     uploadSingle(req, res, async (err) => {
@@ -1074,87 +1057,7 @@ router.post("/uploadchurchlogo/:id", verifyTokenAndAdmin, async (req, res) => {
             data: updatedChurchLogo,
         });
     });
-
 })
 
-//Get User
-router.get("/user/:id", verifyTokenAndAdmin, async (req, res) => {
-    const { id } = req.params;
-
-    const availId = await User.findOne({ _id: id })
-    if (!availId) return res.status(401).json({ msg: "User with Id does not Exists" });
-    try {
-        const UserData = await User.findById(req.params.id)
-        return res.status(200).json({
-            status: {
-                code: 100,
-                msg: "User Fetched Successfully",
-            },
-            data: UserData
-        })
-
-    } catch (err) {
-        return res.status(500).json({ msg: err })
-    }
-})
-
-//Delete User (ONLY Admin CAN DELETE User)
-router.delete("/user/:id", verifyTokenAndAdmin, async (req, res) => {
-    const { id } = req.params;
-    const availId = await User.findOne({ _id: id })
-    if (!availId) return res.status(401).json({ msg: "User with Id does not Exists" });
-
-    try {
-        await User.findByIdAndDelete(req.params.id)
-        return res.status(200).json({
-            status: {
-                code: 100,
-                msg: "User deleted Successfully"
-            }
-        })
-    } catch (err) {
-        return res.status(500).json({ msg: err })
-    }
-})
-
-//Get all Users based on SUPERADMIN ID (ONLY admin user CAN GET ALL users)
-router.get("/getusers", verifyTokenAndAdmin, async (req, res) => {
-    //Initiating a seach parameter with (User)
-    const { super_id } = req.body;
-    let query = {};
-    if (req.query.search) {
-        query.$or = [
-            { "first_name": { $regex: req.query.search, $options: 'i' } }, { "last_name": { $regex: req.query.search, $options: 'i' } }, { "email": { $regex: req.query.search, $options: 'i' } },
-        ];
-    }
-
-    const pageSize = req.query.pageSize || 10;
-    const currentPage = req.query.currentPage || 1;
-    try {
-        const users = await User.find(req.query.search ? query : { super: super_id })
-            .sort({ createdAt: -1 })
-            .skip(pageSize * (currentPage - 1))
-            .limit(pageSize);
-
-        // count the total number of records for that model
-        const totalUsers = await User.countDocuments();
-
-        if (!users) return res.status(404).json({ msg: "There's No User Available" })
-
-        return res.status(200).json({
-            status: {
-                code: 100,
-                msg: 'All Users fetched successfully'
-            },
-            data: users,
-            totalPage: parseInt(pageSize),
-            totalRecords: parseInt(totalUsers),
-            page: parseInt(currentPage),
-        })
-    } catch (err) {
-        return res.status(500).json({ msg: err });
-    }
-
-})
 
 module.exports = router

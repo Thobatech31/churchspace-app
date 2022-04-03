@@ -5,10 +5,10 @@ const __basedir = path.resolve();
 var excelReader = require('../helper/excel-reader');
 const upload = require("../middleware/upload");
 const readXlsxFile = require("read-excel-file/node");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  Member
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { email, mobile, alternative_mobile, first_name, last_name, date_joined,
     home_address, office_address, occupation, gender, dob, photo, mdepartment, mchurch_group
   
@@ -47,7 +47,7 @@ router.post("/", verifyToken, async (req, res) => {
 })
 
 
-router.get('/readbulkuploadfile', verifyToken, function (req, res, next) {
+router.get('/readbulkuploadfile', verifyTokenUser, function (req, res, next) {
   const { email, mobile, alternative_mobile, first_name, last_name, date_joined,
     home_address, office_address, occupation, gender, dob, photo, mdepartment, mchurch_group
   } = req.body;
@@ -88,7 +88,7 @@ try{
 });
 
 
-router.post("/bulkupload", verifyToken, upload.single("file"), async (req, res) => {
+router.post("/bulkupload", verifyTokenUser, upload.single("file"), async (req, res) => {
   const { mdepartment, mchurch_group
   } = req.body;
   const user = req.user;
@@ -147,7 +147,7 @@ router.post("/bulkupload", verifyToken, upload.single("file"), async (req, res) 
 
 
 //UPDATE Member (ONLY User CAN UPDATE Member)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
 const availId = await Member.findOne({_id: id})
@@ -171,7 +171,7 @@ const availId = await Member.findOne({_id: id})
 })
 
 //Delete Member (ONLY User CAN DELETE Member)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Member.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Member with Id does not Exists" });
@@ -190,7 +190,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get Member
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await Member.findOne({ _id: id })
@@ -211,7 +211,7 @@ router.get("/find/:id", verifyToken, async (req, res) => {
 })
 
 //Get BY USER iD Member
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (Member)
   let query = {};
   if (req.query.search) {

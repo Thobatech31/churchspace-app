@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const Department = require("../models/departmentModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  Department
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { department, description, ministerId, memberId } = req.body;
   if (!department) return res.status(401).json({ msg: "Department Field is Empty" });
 
@@ -32,7 +32,7 @@ router.post("/", verifyToken, async (req, res) => {
 })
 
 //UPDATE Department (ONLY User CAN UPDATE Department)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Group.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Group with Id does not Exists" });
@@ -55,7 +55,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete Department (ONLY User CAN DELETE Department)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Group.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Group with Id does not Exists" });
@@ -74,7 +74,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get Department
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Group.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Group with Id does not Exists" });
@@ -95,7 +95,7 @@ router.get("/find/:id", verifyToken, async (req, res) => {
 })
 
 //Get BY USER iD Department
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (Department)
   let query = {};
   if (req.query.search) {

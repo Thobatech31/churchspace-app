@@ -1,16 +1,15 @@
 const router = require('express').Router();
 const Group = require("../models/churchGroupModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenUser, verifyTokenAndAdmin } = require("../verifyToken");
 
 //Create  CHURCH GROUP
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { group, description } = req.body;
   if (!group) return res.status(401).json({ msg: "Group Field is Empty" });
 
   if (!description) return res.status(401).json({ msg: "Description Field is Empty" })
-
+  
   const user = req.user;
-
   try {
     const savedGroup = await Group.create({
       userId:user.id,
@@ -27,11 +26,10 @@ router.post("/", verifyToken, async (req, res) => {
   } catch (err) {
     return res.status(500).json({ msg: err })
   }
-
 })
 
 //UPDATE GROUP (ONLY User CAN UPDATE Group)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Group.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Group with Id does not Exists" });
@@ -54,7 +52,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete group (ONLY User CAN DELETE Group)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Group.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Group with Id does not Exists" });
@@ -72,12 +70,12 @@ router.delete("/:id", verifyToken, async (req, res) => {
   }
 })
 
+
 //Get Group
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Group.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Group with Id does not Exists" });
-
   try {
     const group = await Group.findById(req.params.id )
     return res.status(200).json({
@@ -94,7 +92,7 @@ router.get("/find/:id", verifyToken, async (req, res) => {
 })
 
 //Get BY USER iD Group
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (group)
   let query = {};
   if (req.query.search) {
@@ -142,9 +140,7 @@ router.get("/findByUserId", verifyToken, async (req, res, next) => {
   } catch (err) {
     return res.status(500).json({ msg: err });
   }
-  
 })
-
 
 
 //Get all groups (ONLY user CAN GET ALL Groups)
@@ -156,7 +152,6 @@ router.get("/", verifyTokenAndAdmin, async (req, res) => {
       { "group": { $regex: req.query.search, $options: 'i' } },
     ];
   }
-
   const pageSize = req.query.pageSize || 10;
   const currentPage = req.query.currentPage || 1;
   try {
@@ -183,8 +178,6 @@ router.get("/", verifyTokenAndAdmin, async (req, res) => {
   } catch (err) {
     return res.status(500).json({ msg: err });
   }
-
 })
-
 
 module.exports = router

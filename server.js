@@ -6,6 +6,7 @@ var cors = require('cors');
 
 //import Routes
 const authRoute = require('./routes/authRoute');
+const userRoute = require('./routes/userRoutes');
 const dashboardRoute = require('./routes/dashboardRoute')
 const groupRoute = require('./routes/churchGroupRoute');
 const departmentRoute = require('./routes/departmentRoute');
@@ -42,6 +43,7 @@ mongoose.connect(process.env.MONGO_URL, {
 
 // //Routes Middleware
 app.use('/api/auth', authRoute);
+app.use('/api/user', userRoute);
 app.use('/api/dashboard', dashboardRoute);
 app.use('/api/group', groupRoute);
 app.use('/api/department', departmentRoute);

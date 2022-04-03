@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const Welfare = require("../models/welfareModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 const Member = require("../models/memberModel");
 
 const dotenv = require("dotenv");
@@ -36,7 +36,7 @@ const upload = (bucketName) =>
 
 
 //Create  Welfare
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { email, mobile, first_name, last_name, memberId, request_details
   } = req.body;
   if (!email) return res.status(401).json({ msg: "Email Field is Empty" });
@@ -94,7 +94,7 @@ router.post("/", verifyToken, async (req, res) => {
 
 
 //UPDATE Welfare (ONLY User CAN UPDATE Welfare)
-router.post("/uploadrequestdoc/:id", verifyToken, async (req, res) => {
+router.post("/uploadrequestdoc/:id", verifyTokenUser, async (req, res) => {
 
   const { id } = req.params;
 
@@ -131,7 +131,7 @@ router.post("/uploadrequestdoc/:id", verifyToken, async (req, res) => {
 })
 
 //UPDATE Welfare (ONLY User CAN UPDATE Welfare)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await Welfare.findOne({ _id: id })
@@ -155,7 +155,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete Welfare (ONLY User CAN DELETE Welfare)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Welfare.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Welfare with Id does not Exists" });
@@ -173,7 +173,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get Welfare
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await Welfare.findOne({ _id: id })
@@ -234,7 +234,7 @@ router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
 })
 
 //Get BY USER iD Welfare
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (Welfare)
   let query = {};
   if (req.query.search) {

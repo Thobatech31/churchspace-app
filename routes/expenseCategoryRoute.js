@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const ExpenseCategory = require("../models/expenseCategoryModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  ExpenseCategory
 router.post("/", verifyTokenAndAdmin, async (req, res) => {
@@ -30,7 +30,7 @@ router.post("/", verifyTokenAndAdmin, async (req, res) => {
 })
 
 //UPDATE ExpenseCategory (ONLY User CAN UPDATE ExpenseCategory)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
 
     const availId = await ExpenseCategory.findOne({ _id: id })
@@ -54,7 +54,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete ExpenseCategory (ONLY User CAN DELETE ExpenseCategory)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
     const availId = await ExpenseCategory.findOne({ _id: id })
     if (!availId) return res.status(401).json({ msg: "Expense Category with Id does not Exists" });
@@ -73,7 +73,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get ExpenseCategory
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
     const { id } = req.params;
 
     const availId = await ExpenseCategory.findOne({ _id: id })
@@ -94,7 +94,7 @@ router.get("/find/:id", verifyToken, async (req, res) => {
 })
 
 //Get All ExpenseCategory
-router.get("/", verifyToken, async (req, res, next) => {
+router.get("/", verifyTokenUser, async (req, res, next) => {
     //Initiating a seach parameter with (ExpenseCategory)
     let query = {};
     if (req.query.search) {
@@ -134,7 +134,7 @@ router.get("/", verifyToken, async (req, res, next) => {
 })
 
 //Get BY USER iD ExpenseCategory
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
     //Initiating a seach parameter with (ExpenseCategory)
     let query = {};
     if (req.query.search) {

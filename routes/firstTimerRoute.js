@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const FirstTimer = require("../models/firstTimerModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  FirstTimer
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { email, mobile, alternative_mobile, first_name, last_name, date_joined,
     home_address, office_address, occupation, gender, dob, ministerId, memberId
   } = req.body;
@@ -52,7 +52,7 @@ router.post("/", verifyToken, async (req, res) => {
 })
 
 //UPDATE FirstTimer (ONLY User CAN UPDATE FirstTimer)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await FirstTimer.findOne({ _id: id })
@@ -76,7 +76,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete FirstTimer (ONLY User CAN DELETE FirstTimer)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await FirstTimer.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "FirstTimer with Id does not Exists" });
@@ -94,7 +94,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get FirstTimer
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await FirstTimer.findOne({ _id: id })
@@ -155,7 +155,7 @@ router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
 })
 
 //Get BY USER iD FirstTimer
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (FirstTimer)
   let query = {};
   if (req.query.search) {

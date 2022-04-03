@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const Counselling = require("../models/counsellingModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  Counselling
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { email, mobile, first_name, last_name, date_joined,
     address, counselling_prayerrequest, firsttimerId, memberId
   } = req.body;
@@ -43,7 +43,7 @@ router.post("/", verifyToken, async (req, res) => {
 })
 
 //UPDATE Counselling (ONLY User CAN UPDATE Counselling)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await Counselling.findOne({ _id: id })
@@ -66,8 +66,9 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 })
 
+
 //Delete Counselling (ONLY User CAN DELETE Counselling)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Counselling.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Counselling with Id does not Exists" });
@@ -85,8 +86,9 @@ router.delete("/:id", verifyToken, async (req, res) => {
   }
 })
 
+
 //Get Counselling
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await Counselling.findOne({ _id: id })
@@ -105,6 +107,7 @@ router.get("/find/:id", verifyToken, async (req, res) => {
     return res.status(500).json({ msg: err })
   }
 })
+
 
 //Get All Counselling
 router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
@@ -146,8 +149,9 @@ router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
 
 })
 
+
 //Get BY USER iD Counselling
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (Counselling)
   let query = {};
   if (req.query.search) {
@@ -183,9 +187,6 @@ router.get("/findByUserId", verifyToken, async (req, res, next) => {
   } catch (err) {
     return res.status(500).json({ msg: err });
   }
-
 })
-
-
 
 module.exports = router

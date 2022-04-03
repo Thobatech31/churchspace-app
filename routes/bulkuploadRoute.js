@@ -4,7 +4,7 @@ const __basedir = path.resolve();
 const Member = require("../models/memberModel");
 const upload = require("../middleware/upload");
 const readXlsxFile = require("read-excel-file/node");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (req.file == undefined) {

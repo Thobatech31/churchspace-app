@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const Minister = require("../models/ministerModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  Minister
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { title, email, mobile, alternative_mobile, first_name, last_name, date_joined,
     home_address, office_address, occupation, gender, dob
   } = req.body;
@@ -51,7 +51,7 @@ router.post("/", verifyToken, async (req, res) => {
 })
 
 //UPDATE Minister (ONLY User CAN UPDATE Minister)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await Minister.findOne({ _id: id })
@@ -75,7 +75,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete Minister (ONLY User CAN DELETE Minister)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await Minister.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Minister with Id does not Exists" });
@@ -94,7 +94,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get Minister
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await Minister.findOne({ _id: id })
@@ -115,7 +115,7 @@ router.get("/find/:id", verifyToken, async (req, res) => {
 })
 
 //Get BY USER iD Minister
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (Minister)
   let query = {};
   if (req.query.search) {
@@ -165,6 +165,7 @@ router.get("/", verifyTokenAndAdmin, async (req, res) => {
       { "first_name": { $regex: req.query.search, $options: 'i' } }, { "last_name": { $regex: req.query.search, $options: 'i' } }, { "email": { $regex: req.query.search, $options: 'i' } },
     ];
   }
+  console.log("jfjfjfjfjfj")
 
   const pageSize = req.query.pageSize || 10;
   const currentPage = req.query.currentPage || 1;

@@ -8,11 +8,11 @@ const mailgun = require("mailgun-js");
 const { result } = require('lodash');
 const DOMAIN = 'sandbox1007fd244adb439091af67d5b46543d1.mailgun.org';
 const mg = mailgun({ apiKey: 'efe5ce01dcc618d9e3b297f06f81cc8a-c250c684-64e5fd3a', domain: DOMAIN });
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 const Feedback = require('../models/feedbackModel');
 
 //Send Feedback
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { feedback_message } = req.body;
 
   //Check If First name OR Last name Field Empty

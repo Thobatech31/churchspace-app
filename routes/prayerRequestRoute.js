@@ -1,9 +1,9 @@
 const router = require('express').Router();
 const PrayerRequest = require("../models/prayerRequestModel");
-const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyToken } = require("../verifyToken");
+const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  PrayerRequest
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", verifyTokenUser, async (req, res) => {
   const { email, mobile, first_name, last_name, date_joined,
     address, prayer_request, firsttimerId, memberId
   } = req.body;
@@ -43,7 +43,7 @@ router.post("/", verifyToken, async (req, res) => {
 })
 
 //UPDATE PrayerRequest (ONLY User CAN UPDATE PrayerRequest)
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await PrayerRequest.findOne({ _id: id })
@@ -67,7 +67,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 })
 
 //Delete PrayerRequest (ONLY User CAN DELETE PrayerRequest)
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
   const availId = await PrayerRequest.findOne({ _id: id })
   if (!availId) return res.status(401).json({ msg: "Prayer Request with Id does not Exists" });
@@ -86,7 +86,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 })
 
 //Get PrayerRequest
-router.get("/find/:id", verifyToken, async (req, res) => {
+router.get("/find/:id", verifyTokenUser, async (req, res) => {
   const { id } = req.params;
 
   const availId = await PrayerRequest.findOne({ _id: id })
@@ -147,7 +147,7 @@ router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
 })
 
 //Get BY USER iD PrayerRequest
-router.get("/findByUserId", verifyToken, async (req, res, next) => {
+router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
   //Initiating a seach parameter with (PrayerRequest)
   let query = {};
   if (req.query.search) {
