@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 var cors = require('cors');
 
+
 //import Routes
 const authRoute = require('./routes/authRoute');
 const userRoute = require('./routes/userRoutes');
@@ -17,7 +18,7 @@ const counsellingRoute = require('./routes/counsellingRoute');
 const prayerRequestRoute = require('./routes/prayerRequestRoute');
 const attendanceRoute = require('./routes/attendanceRoute');
 const expenseCategoryRoute = require('./routes/expenseCategoryRoute');
-const financialRoute = require('./routes/finacialRoute');
+const financialRoute = require('./routes/financialRoute');
 const feedbackRoute = require('./routes/feedbackRoute');
 const employeeRoute = require('./routes/employeeRoute');
 const sendSmsRoute = require('./routes/sendSmsRoute');

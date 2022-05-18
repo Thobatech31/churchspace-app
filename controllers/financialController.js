@@ -4,7 +4,7 @@ const Financial = require("../models/financialModel");
 const { verifyTokenAndAuthorization, verifyTokenAndAdmin, verifyTokenUser } = require("../verifyToken");
 
 //Create  New Offering
-router.post("/offering", verifyTokenUser, async (req, res) => {
+const createOffering = async (req, res) => {
     const { kind, purpose,amount,type,offering_date
     } = req.body;
     if (!amount) return res.status(401).json({ msg: "Amount Field is Empty" })
@@ -31,10 +31,10 @@ router.post("/offering", verifyTokenUser, async (req, res) => {
     } catch (err) {
         return res.status(500).json({ msg: err })
     }
-})
+};
 
 //Create  New Tithe
-router.post("/tithe", verifyTokenUser, async (req, res) => {
+const createTithe = async (req, res) => {
     const { kind, purpose,amount,type,offering_date,tithe_giver_type
     } = req.body;
     if (!amount) return res.status(401).json({ msg: "Amount Field is Empty" })
@@ -62,11 +62,10 @@ router.post("/tithe", verifyTokenUser, async (req, res) => {
     } catch (err) {
         return res.status(500).json({ msg: err })
     }
-})
-
+};
 
 //Create  New Expense
-router.post("/expenses", verifyTokenUser, async (req, res) => {
+const createExpenses = async (req, res) => {
     const { kind, purpose,amount,type,offering_date,remark,expenseCatoryId
     } = req.body;
     if (!amount) return res.status(401).json({ msg: "Amount Field is Empty" })
@@ -97,10 +96,10 @@ router.post("/expenses", verifyTokenUser, async (req, res) => {
     } catch (err) {
         return res.status(500).json({ msg: err })
     }
-})
+};
 
 //UPDATE Financial (ONLY User CAN UPDATE Financial)
-router.put("/:id", verifyTokenUser, async (req, res) => {
+const updateFinancial = async (req, res) => {
     const { id } = req.params;
 
     const availId = await Financial.findOne({ _id: id })
@@ -121,10 +120,10 @@ router.put("/:id", verifyTokenUser, async (req, res) => {
     } catch (err) {
         return res.status(500).json({ msg: err });
     }
-})
+};
 
 //Delete Financial (ONLY User CAN DELETE Financial)
-router.delete("/:id", verifyTokenUser, async (req, res) => {
+const deleteFinancial = async (req, res) => {
     const { id } = req.params;
     const availId = await Financial.findOne({ _id: id })
     if (!availId) return res.status(401).json({ msg: "Financial with Id does not Exists" });
@@ -140,10 +139,10 @@ router.delete("/:id", verifyTokenUser, async (req, res) => {
     } catch (err) {
         return res.status(500).json({ msg: err })
     }
-})
+};
 
 //Get Financial
-router.get("/find/:id", verifyTokenUser, async (req, res) => {
+const getSingleFinancial = async (req, res) => {
     const { id } = req.params;
 
     const availId = await Financial.findOne({ _id: id })
@@ -161,10 +160,10 @@ router.get("/find/:id", verifyTokenUser, async (req, res) => {
     } catch (err) {
         return res.status(500).json({ msg: err })
     }
-})
+};
 
 //Get All Financial
-router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
+const getAllFinancial = async (req, res) => {
     //Initiating a seach parameter with (Financial)
     let query = {};
     if (req.query.search) {
@@ -201,10 +200,10 @@ router.get("/", verifyTokenAndAdmin, async (req, res, next) => {
         return res.status(500).json({ msg: err });
     }
 
-})
+};
 
 //Get BY USER iD Financial
-router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
+const findFinancialById = async (req, res) => {
     //Initiating a seach parameter with (Financial)
     let query = {};
     if (req.query.search) {
@@ -241,10 +240,10 @@ router.get("/findByUserId", verifyTokenUser, async (req, res, next) => {
         return res.status(500).json({ msg: err });
     }
 
-})
+};
 
 //Get Financial Stats
-router.get("/stats", verifyTokenUser, async (req, res, next) => {
+const getFinancialStats = async (req, res) => {
     //Initiating a seach parameter with (Financials)
     const user = req.user;
 
@@ -267,7 +266,7 @@ router.get("/stats", verifyTokenUser, async (req, res, next) => {
         });
 
         Financials.filter((element) => {
-            return element.kind === "income" && element.purpose === "tithe"; 
+            return element.kind === "income" && element.purpose === "tithe";
         }).forEach(each => {
             totalIncomeTithe += each.amount;
         })
@@ -299,7 +298,10 @@ router.get("/stats", verifyTokenUser, async (req, res, next) => {
     } catch (err) {
         return res.status(500).json({ msg: err });
     }
-})
+};
 
-
-module.exports = router
+module.exports = { createOffering, createTithe,
+    createExpenses, updateFinancial,
+    deleteFinancial, getSingleFinancial,
+    getAllFinancial, findFinancialById,
+    getFinancialStats}
