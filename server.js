@@ -6,24 +6,24 @@ var cors = require('cors');
 
 
 //import Routes
-const authRoute = require('./routes/authRoute');
-const userRoute = require('./routes/userRoutes');
-const dashboardRoute = require('./routes/dashboardRoute')
-const groupRoute = require('./routes/churchGroupRoute');
-const departmentRoute = require('./routes/departmentRoute');
-const memberRoute = require('./routes/memberRoute');
-const ministerRoute = require('./routes/ministerRoute');
-const firstTimerRoute = require('./routes/firstTimerRoute');
-const counsellingRoute = require('./routes/counsellingRoute');
-const prayerRequestRoute = require('./routes/prayerRequestRoute');
-const attendanceRoute = require('./routes/attendanceRoute');
-const expenseCategoryRoute = require('./routes/expenseCategoryRoute');
-const financialRoute = require('./routes/financialRoute');
-const feedbackRoute = require('./routes/feedbackRoute');
-const employeeRoute = require('./routes/employeeRoute');
-const sendSmsRoute = require('./routes/sendSmsRoute');
-const welfareRoute = require('./routes/welfareRoute');
-const bulkuploadRoute = require('./routes/bulkuploadRoute');
+const authRoute = require('./routes/auth');
+const userRoute = require('./routes/user');
+const dashboardRoute = require('./routes/dashboard')
+const groupRoute = require('./routes/churchGroup');
+const departmentRoute = require('./routes/department');
+const memberRoute = require('./routes/member');
+const ministerRoute = require('./routes/minister');
+const firstTimerRoute = require('./routes/firstTimer');
+const counsellingRoute = require('./routes/counselling');
+const prayerRequestRoute = require('./routes/prayerRequest');
+const attendanceRoute = require('./routes/attendance');
+const expenseCategoryRoute = require('./routes/expenseCategory');
+const financialRoute = require('./routes/financial');
+const feedbackRoute = require('./routes/feedback');
+const employeeRoute = require('./routes/employee');
+const sendSmsRoute = require('./routes/sendSms');
+const welfareRoute = require('./routes/welfare');
+const bulkuploadRoute = require('./routes/bulkupload');
 
 
 dotenv.config();
