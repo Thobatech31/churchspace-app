@@ -384,8 +384,6 @@ const getFinancialAggregationStats = async (req, res) => {
             message: err
         })
     }
-
-
 };
 
 module.exports = {

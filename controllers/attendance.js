@@ -6,7 +6,7 @@ const {attendanceSchema} = require('../middleware/authentication/attendance_vali
 
 //Create  Attendance
 const createAttendance = async (req, res) => {
-    const { service_title, men_attd, women_attd, children_attd, date_attendance,total_attd
+    const { service_title, men_attd, women_attd, children_attd, date_attendance
     } = req.body;
     const user = req.user;
     try {
@@ -189,31 +189,55 @@ const getAttendanceStats = async (req, res) => {
 
         if (!Attendances) return res.status(404).json({ msg: "There's No Attendance Available" })
 
-        let total = 0;
-        let totalMen = 0;
-        let totalWomen = 0;
-        let totalChildren = 0;
 
-        Attendances.forEach(each => {
-            total += each.total_attd;
-            totalMen += each.men_attd;
-            totalWomen += each.women_attd;
-            totalChildren += each.children_attd;
-        });
+        const getAttendanceStats = () => {
+            /* calculate total for Tota Attendance*/
+            let total = Attendances.reduce((total, current) => total + parseInt(current.total_attd), 0);
 
+            /* calculate total of TotalMen*/
+            let totalMen = Attendances.reduce((total, current) => total + parseInt(current.men_attd), 0);
 
+            /* calculate total of TotalWomen*/
+            let totalWomen = Attendances.reduce((total, current) => total + parseInt(current.women_attd), 0);
 
+            /* calculate total of TotalChildren*/
+            let totalChildren = Attendances.reduce((total, current) => total + parseInt(current.children_attd), 0);
 
-        return res.status(200).json({
-            status: {
-                code: 100,
-                msg: 'fetched successfully'
-            },
-            total_men: totalMen,
-            total_women: totalWomen,
-            total_children: totalChildren,
-            total_attendnce: total,
-        })
+            return res.status(200).json({
+                status: {
+                    code: 100,
+                    msg: 'fetched successfully'
+                },
+                total_attendnce: total,
+                total_men: totalMen,
+                total_women: totalWomen,
+                total_children: totalChildren,
+            })
+        }
+        getAttendanceStats()
+
+        // let total = 0;
+        // let totalMen = 0;
+        // let totalWomen = 0;
+        // let totalChildren = 0;
+
+        // Attendances.forEach(each => {
+        //     total += each.total_attd;
+        //     totalMen += each.men_attd;
+        //     totalWomen += each.women_attd;
+        //     totalChildren += each.children_attd;
+        // });
+
+        // return res.status(200).json({
+        //     status: {
+        //         code: 100,
+        //         msg: 'fetched successfully'
+        //     },
+        //     total_men: totalMen,
+        //     total_women: totalWomen,
+        //     total_children: totalChildren,
+        //     total_attendnce: total,
+        // })
     } catch (err) {
         return res.status(500).json({ msg: err });
     }

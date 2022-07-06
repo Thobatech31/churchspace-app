@@ -5,9 +5,7 @@ const attendanceSchema = Joi.object().keys({
     men_attd: Joi.number().required(),
     women_attd: Joi.number().required(),
     children_attd: Joi.number().required(),
-    total_attd: Joi.number().required(),
     date_attendance: Joi.string().required(),
-    status: Joi.string().default(0).required(),
 });
 
 module.exports ={ attendanceSchema }
